@@ -28,10 +28,12 @@ A production-grade, full-stack real-time polling application built with **Expres
 - Graceful error handling with user-friendly messages
 
 📊 **Real-Time Updates**
-- WebSocket-based communication via Socket.io
-- Instant vote propagation to all connected users
-- Late joiners receive current poll state
-- Proper connection/disconnection handling
+- WebSocket-based communication via Socket.io for bi-directional real-time data flow
+- Instant vote propagation to all connected users via server-side broadcasting to poll-specific rooms
+- Room-based architecture (`poll-${pollId}`) ensures efficient data delivery and scaling
+- Frontend state prioritization of WebSocket events over initial API data for seamless UI updates
+- Late joiners receive current poll state upon connection
+- Proper connection/disconnection handling with automatic reconnection logic
 
 ## Anti-Abuse Mechanisms
 
@@ -221,11 +223,13 @@ npm start
    - Open the poll link
    - Click on an option to vote
    - See results update in real-time as others vote
+   - **Real-Time Sync**: Watch the data synchronize instantly across all devices without any page refresh, powered by the robust Socket.io event engine.
 
 4. **View Results**:
    - Results are visible to you after you vote
    - Number of votes and percentages display for each option
    - Watch the live indicator to see connection status
+   - **Dynamic Feedback**: UI components update automatically upon receiving broadcasted payloads from the backend.
 
 ### Database Persistence
 
@@ -241,11 +245,11 @@ All polls and votes are persisted in MongoDB:
 1. **No User Accounts**: Can't track actual users, only devices/IPs
    - *Improvement*: Add optional email verification or OAuth
 
-2. **IP Detection**:Private networks might show same IP (NAT)
+2. **IP Detection**: Private networks might show same IP (NAT)
    - *Improvement*: Add optional CAPTCHA for additional verification
 
-3. **WebSocket Overhead**: Real-time updates require persistent connection
-   - *Improvement*: Implement Server-Sent Events as fallback for polling
+3. **WebSocket Scaling**: While Socket.io handles thousands of connections, extremely large polls with millions of concurrent viewers would require Redis adapter for horizontal scaling.
+   - *Improvement*: Implement Redis Pub/Sub adapter for Socket.io to sync across multiple backend instances.
 
 4. **Limited Poll Analytics**: Only vote counts stored, no demographics
    - *Improvement*: Add optional demographic collection (age, location, etc.)
