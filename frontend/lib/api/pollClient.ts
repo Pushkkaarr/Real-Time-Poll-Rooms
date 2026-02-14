@@ -89,23 +89,6 @@ class PollApiClient {
   }
 
   /**
-   * Delete a poll
-   * @param pollId - The poll ID
-   * @returns Success message
-   */
-  async deletePoll(pollId: string) {
-    try {
-      const response = await this.client.delete(`/${pollId}`);
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.data) {
-        return error.response.data;
-      }
-      throw this.handleError(error);
-    }
-  }
-
-  /**
    * Get all polls (for testing/admin)
    * @returns Array of polls
    */
