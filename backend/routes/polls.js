@@ -2,6 +2,11 @@ const router = require('express').Router();
 const pollController = require('../controllers/pollController');
 const { voteLimiter, pollCreationLimiter } = require('../middleware/rateLimiter');
 
+// Initialize Socket.io instance for poll controller
+const initializeIO = (io) => {
+  pollController.setIO(io);
+};
+
 // Create a new poll
 router.post('/', pollCreationLimiter, pollController.createPoll);
 
@@ -15,3 +20,4 @@ router.post('/:pollId/vote', voteLimiter, pollController.voteOnPoll);
 router.get('/', pollController.getAllPolls);
 
 module.exports = router;
+module.exports.initializeIO = initializeIO;

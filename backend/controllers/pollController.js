@@ -2,6 +2,12 @@ const Poll = require('../models/Poll');
 const { validatePollCreation, validateVote } = require('../utils/validation');
 const { generateDeviceFingerprint, hashIpAddress, getClientIp } = require('../utils/antiAbuse');
 
+// Import Socket.io instance for broadcasting votes
+let io = null;
+exports.setIO = (ioInstance) => {
+  io = ioInstance;
+};
+
 // Create a new poll
 exports.createPoll = async (req, res) => {
   try {
@@ -41,7 +47,7 @@ exports.createPoll = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error creating poll:', error);
+  
     return res.status(500).json({
       success: false,
       message: 'Error creating poll',
@@ -82,7 +88,7 @@ exports.getPoll = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching poll:', error);
+   
     return res.status(500).json({
       success: false,
       message: 'Error fetching poll',
@@ -130,23 +136,24 @@ exports.voteOnPoll = async (req, res) => {
       });
     }
 
-    // ANTI-ABUSE MECHANISM 1: Check device fingerprint
-    // Prevents users from voting multiple times from the same device/browser
-    const deviceAlreadyVoted = poll.voters.some((voter) => voter.voterId === deviceFingerprint);
-    if (deviceAlreadyVoted) {
+    // ANTI-ABUSE MECHANISM 1: Check if user already voted for THIS SPECIFIC OPTION
+    // Allows multiple votes from same device (household/office scenarios)
+    // but prevents voting for the same option twice
+    const alreadyVotedForThisOption = poll.voters.some(
+      (voter) => voter.voterId === deviceFingerprint && voter.optionId === optionId
+    );
+    if (alreadyVotedForThisOption) {
       return res.status(403).json({
         success: false,
-        message: 'You have already voted on this poll',
+        message: 'You have already voted for this option',
       });
     }
 
     // ANTI-ABUSE MECHANISM 2: Check IP hash and rate limiting
     // Hashed IPs are tracked to prevent distributed voting attacks
-    // Also counts multiple votes from same IP within the poll context
+    // Allow up to 3 votes per IP per poll (for household/office scenarios)
     const ipVoteCount = poll.voters.filter((voter) => voter.ipHash === ipHash).length;
     if (ipVoteCount >= 3) {
-      // Allow up to 3 votes per IP per poll (for household/office scenarios)
-      // This is balanced against preventing coordinated spam
       return res.status(429).json({
         success: false,
         message: 'Too many votes from this network. Please try again later',
@@ -162,16 +169,29 @@ exports.voteOnPoll = async (req, res) => {
       });
     }
 
-    // Register the vote
+    // Register the vote - atomically increment vote count
     poll.options[optionIndex].votes += 1;
     poll.totalVotes += 1;
     poll.voters.push({
       voterId: deviceFingerprint,
+      optionId: optionId,  // Track which option was voted for
       ipHash: ipHash,
       timestamp: new Date(),
     });
 
     await poll.save();
+    
+    // Broadcast vote update to all WebSocket clients in this poll room
+    if (io) {
+      const updatePayload = {
+        pollId: poll.pollId,
+        question: poll.question,
+        options: poll.options,
+        totalVotes: poll.totalVotes,
+      };
+      
+      io.to(`poll-${pollId}`).emit('poll-updated', updatePayload);
+    }
 
     return res.status(200).json({
       success: true,
@@ -184,7 +204,7 @@ exports.voteOnPoll = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error voting on poll:', error);
+    
     return res.status(500).json({
       success: false,
       message: 'Error recording vote',
@@ -203,7 +223,7 @@ exports.getAllPolls = async (req, res) => {
       polls,
     });
   } catch (error) {
-    console.error('Error fetching polls:', error);
+ 
     return res.status(500).json({
       success: false,
       message: 'Error fetching polls',

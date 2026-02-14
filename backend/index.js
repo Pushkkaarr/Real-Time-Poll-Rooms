@@ -51,10 +51,12 @@ app.get('/', (req, res) => {
 
 app.use('/api/polls', pollRoutes);
 
+// Initialize Socket.io in poll routes for broadcasting
+const pollRoutesModule = require('./routes/polls');
+pollRoutesModule.initializeIO(io);
+
 // WebSocket Connection Handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-
   // Join a poll room
   socket.on('join-poll', async (pollId) => {
     try {
@@ -70,10 +72,7 @@ io.on('connection', (socket) => {
           totalVotes: poll.totalVotes,
         });
       }
-      
-      console.log(`User ${socket.id} joined poll ${pollId}`);
     } catch (error) {
-      console.error('Error joining poll:', error);
       socket.emit('error', { message: 'Error joining poll' });
     }
   });
@@ -92,29 +91,25 @@ io.on('connection', (socket) => {
           options: poll.options,
           totalVotes: poll.totalVotes,
         });
-
-        console.log(`Vote update broadcast for poll ${pollId}`);
       }
     } catch (error) {
-      console.error('Error broadcasting vote:', error);
+      // Silently handle vote broadcast errors
     }
   });
 
   // Leave poll room
   socket.on('leave-poll', (pollId) => {
     socket.leave(`poll-${pollId}`);
-    console.log(`User ${socket.id} left poll ${pollId}`);
   });
 
   // Disconnect
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
+    // User disconnected
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -133,3 +128,6 @@ server.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
   console.log(`WebSocket server running on ws://localhost:${PORT}`);
 });
+
+// Export io instance for use in other modules
+module.exports = io;
