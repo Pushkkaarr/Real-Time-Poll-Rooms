@@ -60,6 +60,14 @@ class PollApiClient {
       });
       return response.data;
     } catch (error) {
+      // Return error response in same format as success
+      if (error.response?.data) {
+        return {
+          success: false,
+          message: error.response.data?.message || 'Vote failed',
+          poll: error.response.data?.poll || null,
+        };
+      }
       throw this.handleError(error);
     }
   }
@@ -79,7 +87,7 @@ class PollApiClient {
 
   private handleError(error: any) {
     if (error.response) {
-      return new Error(error.response.data?.message || 'API Error');
+      return new Error(error.response.data?.message || `API Error: ${error.response.status}`);
     } else if (error.request) {
       return new Error('No response from server');
     } else {

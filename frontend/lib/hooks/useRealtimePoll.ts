@@ -20,7 +20,6 @@ export const useRealtimePoll = (pollId: string | null) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to WebSocket server');
       setIsConnected(true);
       newSocket.emit('join-poll', pollId);
     });
@@ -34,12 +33,11 @@ export const useRealtimePoll = (pollId: string | null) => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket server');
       setIsConnected(false);
     });
 
     newSocket.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      // Silently handle WebSocket errors
     });
 
     setSocket(newSocket);
