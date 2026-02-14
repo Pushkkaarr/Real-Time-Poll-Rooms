@@ -53,15 +53,8 @@ const pollSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
-    expiresAt: {
-      type: Date,
-      default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-    },
   },
   { timestamps: true }
 );
-
-// TTL Index for auto-deletion (optional)
-pollSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('Poll', pollSchema);

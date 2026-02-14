@@ -22,42 +22,49 @@ export default function SharePoll({ pollId, shareUrl }: SharePollProps) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 space-y-4">
+    <div className="brutalist-card space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Share Your Poll</h3>
-        <p className="text-sm text-gray-600">
-          Share this link with others so they can vote on your poll
+        <h3 className="text-xl font-black text-[var(--font-color)] mb-2 uppercase tracking-tighter">Spread the Word</h3>
+        <p className="text-sm font-bold text-[var(--font-color-sub)] uppercase whitespace-nowrap overflow-hidden text-ellipsis">
+          Share this link with your community
         </p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-4">
         <input
           type="text"
           value={shareUrl}
           readOnly
-          className="flex-1 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg text-sm font-mono text-gray-700"
+          className="brutalist-input w-full font-mono text-xs py-2 h-12"
         />
         <button
           onClick={handleCopy}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+          className="brutalist-button w-full py-3 text-sm uppercase tracking-widest whitespace-nowrap"
         >
           {copied ? (
-            <>
+            <span className="flex items-center justify-center gap-2">
               <Check size={18} />
-              Copied!
-            </>
+              COPIED
+            </span>
           ) : (
-            <>
+            <span className="flex items-center justify-center gap-2">
               <Copy size={18} />
-              Copy
-            </>
+              COPY LINK
+            </span>
           )}
         </button>
       </div>
 
-      <p className="text-xs text-gray-500">
-        Poll ID: <span className="font-mono text-gray-700">{pollId}</span>
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-black uppercase text-[var(--font-color-sub)] tracking-[0.2em]">
+          ID: {pollId}
+        </p>
+        <div className="flex gap-2">
+          <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />
+          <div className="w-2 h-2 rounded-full bg-[var(--main-color)] opacity-50" />
+          <div className="w-2 h-2 rounded-full bg-[var(--main-color)] opacity-25" />
+        </div>
+      </div>
     </div>
   );
 }

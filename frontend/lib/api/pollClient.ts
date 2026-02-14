@@ -42,7 +42,10 @@ class PollApiClient {
     try {
       const response = await this.client.get(`/${pollId}`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.data) {
+        return error.response.data;
+      }
       throw this.handleError(error);
     }
   }
@@ -61,6 +64,23 @@ class PollApiClient {
       return response.data;
     } catch (error: any) {
       // Return error response in same format as success
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Delete a poll
+   * @param pollId - The poll ID
+   * @returns Success message
+   */
+  async deletePoll(pollId: string) {
+    try {
+      const response = await this.client.delete(`/${pollId}`);
+      return response.data;
+    } catch (error: any) {
       if (error.response?.data) {
         return error.response.data;
       }

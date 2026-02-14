@@ -20,31 +20,28 @@ export default function PollResults({
   onVote,
 }: PollResultsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Poll Question */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{poll.question}</h2>
-        {hasVoted && (
-          <>
-            <p className="text-sm text-gray-500 mb-2">
-              Total votes: <span className="font-semibold text-gray-700">{poll.totalVotes}</span>
-            </p>
-            <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-              ✓ Votes submitted
+        <h2 className="text-3xl font-black text-[var(--font-color)] mb-4 uppercase leading-tight tracking-tight border-l-4 border-[var(--main-color)] pl-4">
+          {poll.question}
+        </h2>
+        
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="brutalist-button-sm text-xs font-black uppercase px-4 cursor-default whitespace-nowrap">
+            {poll.totalVotes} {poll.totalVotes === 1 ? 'Vote' : 'Votes'}
+          </div>
+          
+          {hasVoted && (
+            <div className="text-xs font-black uppercase px-4 py-2 rounded-full border-2 border-black bg-green-500 text-white shadow-[2px_2px_0px_0px_black]">
+              ✓ Record Saved
             </div>
-          </>
-        )}
-        {!hasVoted && (
-          <p className="text-sm text-gray-500">
-            {poll.totalVotes === 0 
-              ? 'Be the first to vote!'
-              : `${poll.totalVotes} vote${poll.totalVotes !== 1 ? 's' : ''} so far`}
-          </p>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {poll.options.map((option) => (
           <VoteButton
             key={option.optionId}
@@ -60,9 +57,9 @@ export default function PollResults({
 
       {/* Instructions for users who haven't voted */}
       {!hasVoted && poll.totalVotes > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-blue-700 font-medium">
-            👆 Choose an option to see the results
+        <div className="brutalist-card py-4 bg-[var(--bg-inner)] text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-[var(--main-color)]">
+            👆 Select an option to see results
           </p>
         </div>
       )}

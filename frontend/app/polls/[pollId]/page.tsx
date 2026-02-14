@@ -223,10 +223,10 @@ export default function PollPage() {
 
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading poll...</p>
+          <Loader className="w-16 h-16 text-[var(--main-color)] animate-spin mx-auto mb-4" />
+          <p className="font-bold uppercase tracking-widest text-[var(--main-color)]">Syncing Data...</p>
         </div>
       </div>
     );
@@ -234,26 +234,26 @@ export default function PollPage() {
 
   if ((error && !poll) || isDeleted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-[var(--bg-page)] py-12 px-4">
+        <div className="max-w-3xl mx-auto">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold mb-8"
+            className="inline-flex items-center gap-2 text-[var(--main-color)] hover:underline font-black uppercase tracking-widest mb-12 transform-all hover:-translate-x-1"
           >
             <ChevronLeft size={20} />
-            Create New Poll
+            Abort & Reset
           </Link>
 
-          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
-            <p className="text-red-700 text-lg font-semibold mb-2">Poll Not Found</p>
-            <p className="text-red-600 text-sm mb-6">
-              This poll has been expired or deleted by owner.
+          <div className="brutalist-card bg-red-100 border-red-500 shadow-[4px_4px_0_0_#ef4444] text-center p-12">
+            <h1 className="text-4xl font-black text-red-500 uppercase tracking-tighter mb-4">Access Denied</h1>
+            <p className="text-red-700 font-bold uppercase text-sm mb-10 leading-relaxed italic">
+              This data stream has been terminated by the source.
             </p>
             <Link
               href="/"
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+              className="brutalist-button inline-block bg-red-500 border-black text-white shadow-[4px_4px_0_0_#000000]"
             >
-              Create a New Poll
+              Start New Stream →
             </Link>
           </div>
         </div>
@@ -264,57 +264,64 @@ export default function PollPage() {
   if (!poll) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-page)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
         {/* Back Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold mb-8"
+          className="inline-flex items-center gap-2 text-[var(--main-color)] hover:underline font-black uppercase tracking-widest mb-8 transform-all hover:-translate-x-1"
         >
           <ChevronLeft size={20} />
-          Create New Poll
+          Back to Poll Creation
         </Link>
 
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mb-6">
-          {/* WebSocket Status Indicator */}
-          <div className="mb-6 flex items-center gap-2 text-sm">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`} />
-            <span className="text-gray-600">
-              {isConnected ? 'Live' : 'Connecting...'}
-            </span>
-          </div>
-
-          <PollResults
-            poll={poll}
-            hasVoted={hasVoted}
-            votedOptionIds={votedOptionIds}
-            isLoading={isLoading}
-            onVote={handleVote}
-          />
-
-          {error && (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Main Card */}
+          <div className="flex-1 w-full brutalist-card lg:mb-10">
+            {/* WebSocket Status Indicator */}
+            <div className="mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
+                <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
+                  {isConnected ? 'LIVE FEED ACTIVE' : 'RECONNECTING...'}
+                </span>
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Share Card */}
-        <SharePoll pollId={pollId} shareUrl={shareUrl} />
+            <PollResults
+              poll={poll}
+              hasVoted={hasVoted}
+              votedOptionIds={votedOptionIds}
+              isLoading={isLoading}
+              onVote={handleVote}
+            />
 
-        {/* Owner Actions */}
-        {isOwner && (
-          <div className="mt-8 border-t border-gray-200 pt-6 text-center">
-            <button
-              onClick={handleDeletePoll}
-              disabled={isDeleting}
-              className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete this poll'}
-            </button>
+            {error && (
+              <div className="mt-8 brutalist-card bg-red-900/20 border-red-500 shadow-[4px_4px_0px_0px_#ef4444] p-4">
+                <p className="text-red-500 text-xs font-black uppercase">{error}</p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Side Panel: Share & Actions */}
+          <div className="w-full lg:w-[380px] space-y-8">
+            <SharePoll pollId={pollId} shareUrl={shareUrl} />
+
+            {/* Owner Actions in side panel */}
+            {isOwner && (
+              <div className="brutalist-card bg-red-50/50 border-red-200">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-4">Danger Zone</h4>
+                <button
+                  onClick={handleDeletePoll}
+                  disabled={isDeleting}
+                  className="w-full brutalist-button bg-red-500 text-white border-black text-xs py-3"
+                >
+                  {isDeleting ? 'ERASING...' : 'DELETE POLL FOREVER'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

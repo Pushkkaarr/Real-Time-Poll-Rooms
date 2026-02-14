@@ -31,24 +31,22 @@ export default function VoteButton({
       title={isUserVotedForThis ? 'You have already voted for this option' : 'Click to vote'}
       className="w-full text-left group transition-all"
     >
-      <div className="relative overflow-hidden rounded-lg border-2 bg-white p-4 transition-all duration-200 hover:shadow-lg disabled:shadow-none"
-        style={{
-          backgroundColor: isUserVotedForThis ? '#dcfce7' : (isVoted ? '#e0f2fe' : 'white'),
-          borderColor: isUserVotedForThis ? '#22c55e' : (isVoted ? '#0284c7' : '#bfdbfe'),
-          opacity: isUserVotedForThis || isLoading ? 1 : 'inherit',
-          pointerEvents: isUserVotedForThis ? 'none' : 'auto',
-        }}
+      <div 
+        className={`relative overflow-hidden rounded-lg border-[3px] p-4 transition-all duration-200 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
+          isUserVotedForThis 
+            ? 'bg-green-100 border-green-500 shadow-[4px_4px_0px_0px_#22c55e]' 
+            : isVoted 
+              ? 'bg-[var(--bg-inner)] border-[var(--main-color)] shadow-[4px_4px_0px_0px_var(--main-color)]'
+              : 'bg-[var(--bg-inner)] border-[var(--main-color)] shadow-[4px_4px_0px_0px_var(--main-color)] hover:shadow-[6px_6px_0px_0px_var(--main-color)]'
+        }`}
       >
         {/* Progress bar background - show if voted by anyone */}
         {isVoted && (
           <div
-            className="absolute left-0 top-0 h-full transition-all duration-500"
+            className="absolute left-0 top-0 h-full transition-all duration-500 opacity-30"
             style={{
-              background: isUserVotedForThis 
-                ? 'linear-gradient(to right, #86efac, #bbf7d0)' 
-                : 'linear-gradient(to right, rgb(191, 219, 254), rgb(191, 219, 254))',
+              backgroundColor: isUserVotedForThis ? '#16a34a' : 'var(--main-color)',
               width: `${votePercentage}%`,
-              opacity: 0.5,
             }}
           />
         )}
@@ -56,23 +54,23 @@ export default function VoteButton({
         {/* Content */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-800">{option.text}</span>
+            <span className="font-bold text-[var(--font-color)] uppercase tracking-tight">{option.text}</span>
             {isUserVotedForThis && (
-              <span className="text-lg font-bold text-green-600">✓ Your vote</span>
+              <span className="text-[10px] font-black text-white bg-green-600 px-2 py-0.5 rounded border-2 border-black shadow-[2px_2px_0px_0px_black]">✓ VOTED</span>
             )}
             {isLoading && (
-              <span className="text-sm text-gray-500 animate-pulse">Voting...</span>
+              <span className="text-sm text-[var(--font-color-sub)] animate-pulse font-bold italic">VOTING...</span>
             )}
           </div>
           {isVoted ? (
             <div className="text-right">
-              <div className="text-lg font-bold" style={{ color: isUserVotedForThis ? '#22c55e' : '#0284c7' }}>
+              <div className={`text-xl font-black ${isUserVotedForThis ? 'text-green-700' : 'text-[var(--font-color)]'}`}>
                 {option.votes}
               </div>
-              <div className="text-sm text-gray-500">{votePercentage.toFixed(1)}%</div>
+              <div className="text-xs font-bold text-[var(--font-color-sub)]">{votePercentage.toFixed(1)}%</div>
             </div>
           ) : (
-            <div className="text-sm text-gray-400">Click to vote</div>
+            <div className="text-xs font-black text-[var(--main-color)] uppercase tracking-widest">Vote</div>
           )}
         </div>
       </div>

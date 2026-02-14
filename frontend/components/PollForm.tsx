@@ -63,7 +63,7 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Question Input */}
       <div>
-        <label htmlFor="question" className="block text-sm font-semibold text-gray-700 mb-2">
+        <label htmlFor="question" className="block text-sm font-bold text-[var(--font-color)] mb-2 uppercase tracking-wider">
           Poll Question
         </label>
         <textarea
@@ -71,27 +71,26 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="What's your question?"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none transition-colors"
-          rows={3}
+          className="brutalist-input resize-none h-32"
           disabled={isLoading}
         />
-        <p className="text-xs text-gray-500 mt-1">{question.length}/500 characters</p>
+        <p className="text-xs text-[var(--font-color-sub)] mt-2 font-medium">{question.length}/500 characters</p>
       </div>
 
       {/* Options */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Poll Options (minimum 2, maximum 10)
+        <label className="block text-sm font-bold text-[var(--font-color)] mb-2 uppercase tracking-wider">
+          Poll Options (min 2, max 10)
         </label>
-        <div className="space-y-2">
+        <div className="space-y-4">
           {options.map((option, index) => (
-            <div key={index} className="flex gap-2">
+            <div key={index} className="flex gap-3">
               <input
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
                 placeholder={`Option ${index + 1}`}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                className="brutalist-input flex-1"
                 disabled={isLoading}
                 maxLength={200}
               />
@@ -100,7 +99,7 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
                   type="button"
                   onClick={() => handleRemoveOption(index)}
                   disabled={isLoading}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  className="brutalist-button-sm text-red-500 border-red-500 shadow-[2px_2px_0px_0px_#ef4444]"
                 >
                   <X size={20} />
                 </button>
@@ -114,7 +113,7 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
             type="button"
             onClick={handleAddOption}
             disabled={isLoading}
-            className="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50"
+            className="mt-4 flex items-center gap-2 text-[var(--main-color)] hover:underline font-bold uppercase tracking-wider text-sm transition-all"
           >
             <Plus size={18} />
             Add Option
@@ -124,8 +123,8 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
 
       {/* Error Message */}
       {(formError || error) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700 text-sm font-medium">{formError || error}</p>
+        <div className="bg-red-100 border-[3px] border-red-500 rounded-[10px] p-4 shadow-[4px_4px_0px_0px_#ef4444]">
+          <p className="text-red-500 text-sm font-bold uppercase">{formError || error}</p>
         </div>
       )}
 
@@ -133,9 +132,9 @@ export default function PollForm({ onSubmit, isLoading, error }: PollFormProps) 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors"
+        className="brutalist-button-primary w-full uppercase tracking-widest text-lg"
       >
-        {isLoading ? 'Creating Poll...' : 'Create Poll'}
+        {isLoading ? 'Creating...' : 'Start Now →'}
       </button>
     </form>
   );
