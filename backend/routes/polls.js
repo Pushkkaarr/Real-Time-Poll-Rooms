@@ -16,6 +16,9 @@ router.get('/:pollId', pollController.getPoll);
 // Vote on a poll
 router.post('/:pollId/vote', voteLimiter, pollController.voteOnPoll);
 
+// Delete a poll
+router.delete('/:pollId', pollController.deletePoll);
+
 // Get all polls (for testing)
 router.get('/', pollController.getAllPolls);
 

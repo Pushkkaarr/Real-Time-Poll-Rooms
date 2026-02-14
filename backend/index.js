@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
       createPoll: 'POST /api/polls',
       getPoll: 'GET /api/polls/:pollId',
       voteOnPoll: 'POST /api/polls/:pollId/vote',
+      deletePoll: 'DELETE /api/polls/:pollId',
       getAllPolls: 'GET /api/polls',
     },
   });

@@ -237,3 +237,42 @@ exports.getAllPolls = async (req, res) => {
     });
   }
 };
+
+// Delete a poll
+exports.deletePoll = async (req, res) => {
+  try {
+    const { pollId } = req.params;
+
+    if (!pollId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Poll ID is required',
+      });
+    }
+
+    const poll = await Poll.findOneAndDelete({ pollId });
+
+    if (!poll) {
+      return res.status(404).json({
+        success: false,
+        message: 'Poll not found or already deleted',
+      });
+    }
+
+    // Broadcast poll deletion to all WebSocket clients in this poll room
+    if (io) {
+      io.to(`poll-${pollId}`).emit('poll-deleted', { pollId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Poll and all associated data deleted successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error deleting poll',
+      error: error.message,
+    });
+  }
+};

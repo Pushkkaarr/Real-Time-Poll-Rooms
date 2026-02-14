@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PollResults from '@/components/PollResults';
 import SharePoll from '@/components/SharePoll';
@@ -56,9 +56,14 @@ export default function PollPage() {
   const [error, setError] = useState('');
   const [initialPoll, setInitialPoll] = useState<Poll | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+
+  const isOwner = typeof window !== 'undefined' && 
+    JSON.parse(localStorage.getItem('my_polls') || '[]').includes(pollId);
 
   // Use WebSocket for real-time updates
-  const { poll: realtimePoll, isConnected, broadcastVote } = useRealtimePoll(pollId);
+  const { poll: realtimePoll, isConnected, isDeleted, broadcastVote } = useRealtimePoll(pollId);
   // CRITICAL: Prioritize realtimePoll (WebSocket) over initialPoll (API)
   // This ensures real-time vote updates are displayed immediately
   // Fallback to initialPoll only if WebSocket hasn't received data yet
@@ -187,6 +192,31 @@ export default function PollPage() {
     }
   };
 
+  const handleDeletePoll = async () => {
+    if (!confirm('Are you sure you want to delete this poll? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await pollApi.deletePoll(pollId);
+      if (response.success) {
+        // Remove from local "my_polls"
+        const myPolls = JSON.parse(localStorage.getItem('my_polls') || '[]');
+        const updatedMyPolls = myPolls.filter((id: string) => id !== pollId);
+        localStorage.setItem('my_polls', JSON.stringify(updatedMyPolls));
+        
+        router.push('/');
+      } else {
+        alert(response.message || 'Failed to delete poll');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error deleting poll');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/polls/${pollId}`
     : '';
@@ -202,7 +232,7 @@ export default function PollPage() {
     );
   }
 
-  if (error && !poll) {
+  if ((error && !poll) || isDeleted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4">
         <div className="max-w-2xl mx-auto">
@@ -216,7 +246,9 @@ export default function PollPage() {
 
           <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
             <p className="text-red-700 text-lg font-semibold mb-2">Poll Not Found</p>
-            <p className="text-red-600 text-sm mb-6">{error}</p>
+            <p className="text-red-600 text-sm mb-6">
+              This poll has been expired or deleted by owner.
+            </p>
             <Link
               href="/"
               className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
@@ -270,6 +302,19 @@ export default function PollPage() {
 
         {/* Share Card */}
         <SharePoll pollId={pollId} shareUrl={shareUrl} />
+
+        {/* Owner Actions */}
+        {isOwner && (
+          <div className="mt-8 border-t border-gray-200 pt-6 text-center">
+            <button
+              onClick={handleDeletePoll}
+              disabled={isDeleting}
+              className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete this poll'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

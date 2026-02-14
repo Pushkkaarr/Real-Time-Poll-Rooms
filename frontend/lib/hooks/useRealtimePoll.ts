@@ -8,6 +8,7 @@ export const useRealtimePoll = (pollId: string | null) => {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
     if (!pollId) return;
@@ -30,6 +31,11 @@ export const useRealtimePoll = (pollId: string | null) => {
 
     newSocket.on('poll-updated', (data: Poll) => {
       setPoll(data);
+    });
+
+    newSocket.on('poll-deleted', () => {
+      setIsDeleted(true);
+      setPoll(null);
     });
 
     newSocket.on('disconnect', () => {
@@ -59,6 +65,7 @@ export const useRealtimePoll = (pollId: string | null) => {
   return {
     poll,
     socket,
+    isDeleted,
     isConnected,
     broadcastVote,
   };

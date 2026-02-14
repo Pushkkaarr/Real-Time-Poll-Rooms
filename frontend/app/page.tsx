@@ -18,6 +18,11 @@ export default function CreatePoll() {
       const response = await pollApi.createPoll(question, options);
 
       if (response.success && response.pollId) {
+        // Store the poll ID in localStorage to identify the owner
+        const myPolls = JSON.parse(localStorage.getItem('my_polls') || '[]');
+        myPolls.push(response.pollId);
+        localStorage.setItem('my_polls', JSON.stringify(myPolls));
+
         // Redirect to the poll page
         router.push(`/polls/${response.pollId}`);
       } else {
