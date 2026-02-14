@@ -25,7 +25,7 @@ export default function CreatePoll() {
       }
     } catch (err: any) {
       setError(err.message || 'Failed to create poll. Please try again.');
-      console.error('Error creating poll:', err);
+      
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,7 @@ import { Poll } from '@/lib/types/poll';
 interface VoteButtonProps {
   option: Poll['options'][0];
   isVoted: boolean;
+  isUserVotedForThis: boolean;
   isLoading: boolean;
   onVote: () => void;
   totalVotes: number;
@@ -14,6 +15,7 @@ interface VoteButtonProps {
 export default function VoteButton({
   option,
   isVoted,
+  isUserVotedForThis,
   isLoading,
   onVote,
   totalVotes,
@@ -22,21 +24,29 @@ export default function VoteButton({
 
   return (
     <button
-      onClick={onVote}
-      disabled={isVoted || isLoading}
-      className="w-full text-left group"
+      onClick={() => {
+        onVote();
+      }}
+      disabled={isUserVotedForThis || isLoading}
+      title={isUserVotedForThis ? 'You have already voted for this option' : 'Click to vote'}
+      className="w-full text-left group transition-all"
     >
-      <div className="relative overflow-hidden rounded-lg border-2 border-blue-200 bg-white p-4 transition-all duration-200 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="relative overflow-hidden rounded-lg border-2 bg-white p-4 transition-all duration-200 hover:shadow-lg disabled:shadow-none"
         style={{
-          backgroundColor: isVoted ? '#e0f2fe' : 'white',
-          borderColor: isVoted ? '#0284c7' : '#bfdbfe',
+          backgroundColor: isUserVotedForThis ? '#dcfce7' : (isVoted ? '#e0f2fe' : 'white'),
+          borderColor: isUserVotedForThis ? '#22c55e' : (isVoted ? '#0284c7' : '#bfdbfe'),
+          opacity: isUserVotedForThis || isLoading ? 1 : 'inherit',
+          pointerEvents: isUserVotedForThis ? 'none' : 'auto',
         }}
       >
-        {/* Progress bar background - only show if voted */}
+        {/* Progress bar background - show if voted by anyone */}
         {isVoted && (
           <div
-            className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-200 to-blue-100 transition-all duration-500"
+            className="absolute left-0 top-0 h-full transition-all duration-500"
             style={{
+              background: isUserVotedForThis 
+                ? 'linear-gradient(to right, #86efac, #bbf7d0)' 
+                : 'linear-gradient(to right, rgb(191, 219, 254), rgb(191, 219, 254))',
               width: `${votePercentage}%`,
               opacity: 0.5,
             }}
@@ -45,10 +55,20 @@ export default function VoteButton({
 
         {/* Content */}
         <div className="relative z-10 flex items-center justify-between">
-          <span className="font-medium text-gray-800">{option.text}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-800">{option.text}</span>
+            {isUserVotedForThis && (
+              <span className="text-lg font-bold text-green-600">✓ Your vote</span>
+            )}
+            {isLoading && (
+              <span className="text-sm text-gray-500 animate-pulse">Voting...</span>
+            )}
+          </div>
           {isVoted ? (
             <div className="text-right">
-              <div className="text-lg font-bold text-blue-600">{option.votes}</div>
+              <div className="text-lg font-bold" style={{ color: isUserVotedForThis ? '#22c55e' : '#0284c7' }}>
+                {option.votes}
+              </div>
               <div className="text-sm text-gray-500">{votePercentage.toFixed(1)}%</div>
             </div>
           ) : (

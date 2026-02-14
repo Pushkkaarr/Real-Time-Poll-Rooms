@@ -17,7 +17,7 @@ export default function SharePoll({ pollId, shareUrl }: SharePollProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      // Silently handle copy errors
     }
   };
 

@@ -7,6 +7,7 @@ import VoteButton from './VoteButton';
 interface PollResultsProps {
   poll: Poll;
   hasVoted: boolean;
+  votedOptionIds: string[];
   isLoading: boolean;
   onVote: (optionId: string) => void;
 }
@@ -14,6 +15,7 @@ interface PollResultsProps {
 export default function PollResults({
   poll,
   hasVoted,
+  votedOptionIds,
   isLoading,
   onVote,
 }: PollResultsProps) {
@@ -28,7 +30,7 @@ export default function PollResults({
               Total votes: <span className="font-semibold text-gray-700">{poll.totalVotes}</span>
             </p>
             <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-              ✓ You have voted
+              ✓ Votes submitted
             </div>
           </>
         )}
@@ -48,6 +50,7 @@ export default function PollResults({
             key={option.optionId}
             option={option}
             isVoted={hasVoted}
+            isUserVotedForThis={votedOptionIds.includes(option.optionId)}
             isLoading={isLoading}
             onVote={() => onVote(option.optionId)}
             totalVotes={poll.totalVotes}

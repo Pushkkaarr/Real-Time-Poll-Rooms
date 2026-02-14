@@ -8,21 +8,60 @@ import SharePoll from '@/components/SharePoll';
 import { pollApi } from '@/lib/api/pollClient';
 import { useRealtimePoll } from '@/lib/hooks/useRealtimePoll';
 import { Poll } from '@/lib/types/poll';
+import { generateDeviceFingerprint } from '@/lib/utils/deviceFingerprint';
 import { ChevronLeft, Loader } from 'lucide-react';
+
+// Helper to safely get vote data from localStorage
+const getStoredVoteData = (pollId: string) => {
+  if (typeof window === 'undefined') return { hasVoted: false, votedOptionIds: [] };
+  
+  try {
+    const stored = localStorage.getItem(`poll_voted_${pollId}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        hasVoted: parsed.hasVoted || false,
+        votedOptionIds: parsed.votedOptionIds || [],
+      };
+    }
+  } catch (e) {
+    // Silently handle localStorage errors
+  }
+  
+  return { hasVoted: false, votedOptionIds: [] };
+};
 
 export default function PollPage() {
   const params = useParams();
   const pollId = params?.pollId as string;
 
-  const [hasVoted, setHasVoted] = useState(false);
+  // Initialize state from localStorage immediately
+  const [hasVoted, setHasVoted] = useState(() => {
+    if (pollId) {
+      const { hasVoted } = getStoredVoteData(pollId);
+      return hasVoted;
+    }
+    return false;
+  });
+
+  const [votedOptionIds, setVotedOptionIds] = useState<string[]>(() => {
+    if (pollId) {
+      const { votedOptionIds } = getStoredVoteData(pollId);
+      return votedOptionIds;
+    }
+    return [];
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [initialPoll, setInitialPoll] = useState<Poll | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [localVoteCount, setLocalVoteCount] = useState(0);
 
   // Use WebSocket for real-time updates
-  const { poll: realtimePoll, isConnected } = useRealtimePoll(pollId);
+  const { poll: realtimePoll, isConnected, broadcastVote } = useRealtimePoll(pollId);
+  // CRITICAL: Prioritize realtimePoll (WebSocket) over initialPoll (API)
+  // This ensures real-time vote updates are displayed immediately
+  // Fallback to initialPoll only if WebSocket hasn't received data yet
   const poll = realtimePoll || initialPoll;
 
   // Fetch initial poll data
@@ -48,28 +87,103 @@ export default function PollPage() {
     fetchPoll();
   }, [pollId]);
 
+  // Refetch poll data to ensure vote counts are current
+  const refetchPoll = async (): Promise<Poll | null> => {
+    if (!pollId) return null;
+    try {
+      const response = await pollApi.getPoll(pollId);
+      if (response.success && response.poll) {
+        setInitialPoll(response.poll);
+        return response.poll;
+      } else {
+        return null;
+      }
+    } catch (err) {
+      return null;
+    }
+  };
+
   const handleVote = async (optionId: string) => {
-    if (!pollId || hasVoted) return;
+    if (!pollId) {
+      setError('Poll ID is missing');
+      return;
+    }
+
+    // Validation: Check if user already voted for THIS SPECIFIC OPTION
+    if (votedOptionIds.includes(optionId)) {
+      setError('You have already voted for this option');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
 
     try {
+      // Step 1: Submit vote to backend
       const response = await pollApi.voteOnPoll(pollId, optionId);
+      
 
-      if (response.success) {
+      if (response.success && response.poll) {
+        // Step 2: Calculate updated state
+        const updatedVotedOptionIds = [...votedOptionIds, optionId];
+        
+        // Step 3: Persist to localStorage IMMEDIATELY (before state updates)
+        const voteData = {
+          hasVoted: true,
+          votedOptionIds: updatedVotedOptionIds,
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem(`poll_voted_${pollId}`, JSON.stringify(voteData));
+
+        // Step 4: Update React state with fresh poll data from API response
         setHasVoted(true);
+        setVotedOptionIds(updatedVotedOptionIds);
         setInitialPoll(response.poll);
-        // The real-time update will handle the rest via WebSocket
-        setLocalVoteCount(localVoteCount + 1);
+        setError(''); // Clear any previous errors
+
+        // Step 5: Broadcast vote to other connected clients IMMEDIATELY
+        broadcastVote(response.poll);
+
+        // Step 6: Refetch to ensure absolute latest data (handles race conditions)
+        setTimeout(async () => {
+          const refetchedPoll = await refetchPoll();
+          if (refetchedPoll) {
+            // Verify vote is still recorded in localStorage
+            const stored = localStorage.getItem(`poll_voted_${pollId}`);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+            }
+          }
+        }, 500);
       } else {
-        setError(response.message || 'Failed to record vote');
+        // Backend rejected the vote
+        const errorMsg = response.message || 'Failed to record vote';
+        
+        if (
+          errorMsg?.includes('already voted for this option') ||
+          errorMsg?.includes('You have already voted for this option')
+        ) {
+          // User already voted - mark as voted and show results
+          const updatedVotedOptionIds = [...votedOptionIds, optionId];
+          setVotedOptionIds(updatedVotedOptionIds);
+          localStorage.setItem(`poll_voted_${pollId}`, JSON.stringify({
+            hasVoted: true,
+            votedOptionIds: updatedVotedOptionIds,
+            timestamp: new Date().toISOString(),
+          }));
+          setHasVoted(true);
+          setError('');
+        } else {
+          setError(errorMsg);
+        }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to vote. Please try again.');
-      console.error('Error voting:', err);
+      const errorMsg = err.message || 'Network error. Please try again.';
+      
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
+     
     }
   };
 
@@ -142,6 +256,7 @@ export default function PollPage() {
           <PollResults
             poll={poll}
             hasVoted={hasVoted}
+            votedOptionIds={votedOptionIds}
             isLoading={isLoading}
             onVote={handleVote}
           />
