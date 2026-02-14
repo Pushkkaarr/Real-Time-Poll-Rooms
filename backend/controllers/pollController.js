@@ -146,6 +146,12 @@ exports.voteOnPoll = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'You have already voted for this option',
+        poll: {
+          pollId: poll.pollId,
+          question: poll.question,
+          options: poll.options,
+          totalVotes: poll.totalVotes,
+        },
       });
     }
 

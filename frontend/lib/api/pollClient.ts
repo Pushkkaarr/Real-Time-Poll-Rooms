@@ -59,14 +59,10 @@ class PollApiClient {
         optionId,
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       // Return error response in same format as success
       if (error.response?.data) {
-        return {
-          success: false,
-          message: error.response.data?.message || 'Vote failed',
-          poll: error.response.data?.poll || null,
-        };
+        return error.response.data;
       }
       throw this.handleError(error);
     }
