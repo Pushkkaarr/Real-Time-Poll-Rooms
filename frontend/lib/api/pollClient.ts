@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { CreatePollRequest, VoteRequest } from '@/lib/types/poll';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -16,16 +17,22 @@ class PollApiClient {
   }
 
   /**
-   * Create a new poll
-   * @param question - The poll question
-   * @param options - Array of poll options
+   * Create a new poll with multiple questions
+   * @param title - The poll title
+   * @param description - Poll description (optional)
+   * @param questions - Array of questions with options
    * @returns Poll object with pollId
    */
-  async createPoll(question: string, options: string[]) {
+  async createPoll(
+    title: string,
+    questions: Array<{ text: string; options: string[] }>,
+    description?: string
+  ) {
     try {
       const response = await this.client.post('/', {
-        question,
-        options,
+        title,
+        description,
+        questions,
       });
       return response.data;
     } catch (error) {
@@ -51,14 +58,16 @@ class PollApiClient {
   }
 
   /**
-   * Vote on a poll
+   * Vote on a specific question in a poll
    * @param pollId - The poll ID
+   * @param questionId - The question ID
    * @param optionId - The selected option ID
    * @returns Updated poll object
    */
-  async voteOnPoll(pollId: string, optionId: string) {
+  async voteOnPoll(pollId: string, questionId: string, optionId: string) {
     try {
       const response = await this.client.post(`/${pollId}/vote`, {
+        questionId,
         optionId,
       });
       return response.data;

@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Poll } from '@/lib/types/poll';
+import { PollOption } from '@/lib/types/poll';
 
 interface VoteButtonProps {
-  option: Poll['options'][0];
+  option: PollOption;
   isVoted: boolean;
   isUserVotedForThis: boolean;
   isLoading: boolean;
   onVote: () => void;
   totalVotes: number;
+  showVotes?: boolean;
 }
 
 export default function VoteButton({
@@ -19,33 +20,34 @@ export default function VoteButton({
   isLoading,
   onVote,
   totalVotes,
+  showVotes = true,
 }: VoteButtonProps) {
-  const votePercentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
+  const votes = option.votes || 0;
+  const votePercentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
 
   return (
     <button
       onClick={() => {
         onVote();
       }}
-      disabled={isUserVotedForThis || isLoading}
-      title={isUserVotedForThis ? 'You have already voted for this option' : 'Click to vote'}
+      disabled={isVoted || isUserVotedForThis || isLoading}
+      title={isUserVotedForThis ? 'You have already voted for this option' : isVoted ? 'Vote recorded' : 'Click to vote'}
       className="w-full text-left group transition-all"
     >
       <div 
         className={`relative overflow-hidden rounded-lg border-[3px] p-4 transition-all duration-200 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
           isUserVotedForThis 
             ? 'bg-green-100 border-green-500 shadow-[4px_4px_0px_0px_#22c55e]' 
-            : isVoted 
+            : showVotes && isVoted
               ? 'bg-[var(--bg-inner)] border-[var(--main-color)] shadow-[4px_4px_0px_0px_var(--main-color)]'
               : 'bg-[var(--bg-inner)] border-[var(--main-color)] shadow-[4px_4px_0px_0px_var(--main-color)] hover:shadow-[6px_6px_0px_0px_var(--main-color)]'
         }`}
       >
-        {/* Progress bar background - show if voted by anyone */}
-        {isVoted && (
+        {/* Progress bar background - show when votes are visible and results are shown */}
+        {showVotes && isVoted && votePercentage > 0 && (
           <div
-            className="absolute left-0 top-0 h-full transition-all duration-500 opacity-30"
+            className="absolute left-0 top-0 h-full transition-all duration-500 opacity-50 bg-[var(--main-color)]"
             style={{
-              backgroundColor: isUserVotedForThis ? '#16a34a' : 'var(--main-color)',
               width: `${votePercentage}%`,
             }}
           />
@@ -62,10 +64,10 @@ export default function VoteButton({
               <span className="text-sm text-[var(--font-color-sub)] animate-pulse font-bold italic">VOTING...</span>
             )}
           </div>
-          {isVoted ? (
+          {showVotes && isVoted ? (
             <div className="text-right">
               <div className={`text-xl font-black ${isUserVotedForThis ? 'text-green-700' : 'text-[var(--font-color)]'}`}>
-                {option.votes}
+                {votes}
               </div>
               <div className="text-xs font-bold text-[var(--font-color-sub)]">{votePercentage.toFixed(1)}%</div>
             </div>

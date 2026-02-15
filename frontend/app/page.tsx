@@ -30,12 +30,12 @@ export default function CreatePoll() {
   const [error, setError] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<keyof typeof FEATURES | null>(null);
 
-  const handleCreatePoll = async (question: string, options: string[]) => {
+  const handleCreatePoll = async (title: string, description: string, questions: Array<{ text: string; options: string[] }>) => {
     setIsLoading(true);
     setError('');
 
     try {
-      const response = await pollApi.createPoll(question, options);
+      const response = await pollApi.createPoll(title, questions, description);
 
       if (response.success && response.pollId) {
         // Store the poll ID in localStorage to identify the owner

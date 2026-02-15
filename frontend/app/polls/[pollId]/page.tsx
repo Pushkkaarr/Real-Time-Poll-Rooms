@@ -13,22 +13,22 @@ import { ChevronLeft, Loader } from 'lucide-react';
 
 // Helper to safely get vote data from localStorage
 const getStoredVoteData = (pollId: string) => {
-  if (typeof window === 'undefined') return { hasVoted: false, votedOptionIds: [] };
+  if (typeof window === 'undefined') return { hasVotedAllQuestions: false, questionsVoted: [] };
   
   try {
     const stored = localStorage.getItem(`poll_voted_${pollId}`);
     if (stored) {
       const parsed = JSON.parse(stored);
       return {
-        hasVoted: parsed.hasVoted || false,
-        votedOptionIds: parsed.votedOptionIds || [],
+        hasVotedAllQuestions: parsed.hasVotedAllQuestions || false,
+        questionsVoted: parsed.questionsVoted || [],
       };
     }
   } catch (e) {
     // Silently handle localStorage errors
   }
   
-  return { hasVoted: false, votedOptionIds: [] };
+  return { hasVotedAllQuestions: false, questionsVoted: [] };
 };
 
 export default function PollPage() {
@@ -36,18 +36,18 @@ export default function PollPage() {
   const pollId = params?.pollId as string;
 
   // Initialize state from localStorage immediately
-  const [hasVoted, setHasVoted] = useState(() => {
+  const [hasVotedAllQuestions, setHasVotedAllQuestions] = useState(() => {
     if (pollId) {
-      const { hasVoted } = getStoredVoteData(pollId);
-      return hasVoted;
+      const { hasVotedAllQuestions } = getStoredVoteData(pollId);
+      return hasVotedAllQuestions;
     }
     return false;
   });
 
-  const [votedOptionIds, setVotedOptionIds] = useState<string[]>(() => {
+  const [questionsVoted, setQuestionsVoted] = useState<string[]>(() => {
     if (pollId) {
-      const { votedOptionIds } = getStoredVoteData(pollId);
-      return votedOptionIds;
+      const { questionsVoted } = getStoredVoteData(pollId);
+      return questionsVoted;
     }
     return [];
   });
@@ -108,15 +108,15 @@ export default function PollPage() {
     }
   };
 
-  const handleVote = async (optionId: string) => {
+  const handleVote = async (questionId: string, optionId: string) => {
     if (!pollId) {
       setError('Poll ID is missing');
       return;
     }
 
-    // Validation: Check if user already voted for THIS SPECIFIC OPTION
-    if (votedOptionIds.includes(optionId)) {
-      setError('You have already voted for this option');
+    // Validation: Check if user already voted for THIS SPECIFIC QUESTION
+    if (questionsVoted.includes(questionId)) {
+      setError('You have already voted on this question');
       return;
     }
 
@@ -125,24 +125,29 @@ export default function PollPage() {
 
     try {
       // Step 1: Submit vote to backend
-      const response = await pollApi.voteOnPoll(pollId, optionId);
-      
+      const response = await pollApi.voteOnPoll(pollId, questionId, optionId);
 
       if (response.success && response.poll) {
         // Step 2: Calculate updated state
-        const updatedVotedOptionIds = [...votedOptionIds, optionId];
+        const updatedQuestionsVoted = [...questionsVoted, questionId];
+        const totalQuestions = response.poll.questions?.length || 1;
+        const allQuestionsVoted = updatedQuestionsVoted.length === totalQuestions;
         
         // Step 3: Persist to localStorage IMMEDIATELY (before state updates)
         const voteData = {
-          hasVoted: true,
-          votedOptionIds: updatedVotedOptionIds,
+          hasVotedAllQuestions: allQuestionsVoted,
+          questionsVoted: updatedQuestionsVoted,
+          votedOptions: {
+            ...JSON.parse(localStorage.getItem(`poll_voted_${pollId}`) || '{}').votedOptions || {},
+            [questionId]: optionId,
+          },
           timestamp: new Date().toISOString(),
         };
         localStorage.setItem(`poll_voted_${pollId}`, JSON.stringify(voteData));
 
         // Step 4: Update React state with fresh poll data from API response
-        setHasVoted(true);
-        setVotedOptionIds(updatedVotedOptionIds);
+        setQuestionsVoted(updatedQuestionsVoted);
+        setHasVotedAllQuestions(allQuestionsVoted);
         setInitialPoll(response.poll);
         setError(''); // Clear any previous errors
 
@@ -165,18 +170,21 @@ export default function PollPage() {
         const errorMsg = response.message || 'Failed to record vote';
         
         if (
-          errorMsg?.includes('already voted for this option') ||
-          errorMsg?.includes('You have already voted for this option')
+          errorMsg?.includes('already voted on this question') ||
+          errorMsg?.includes('You have already voted on this question')
         ) {
           // User already voted - mark as voted and show results
-          const updatedVotedOptionIds = [...votedOptionIds, optionId];
-          setVotedOptionIds(updatedVotedOptionIds);
+          const updatedQuestionsVoted = [...questionsVoted, questionId];
+          const totalQuestions = response.poll?.questions?.length || 1;
+          const allQuestionsVoted = updatedQuestionsVoted.length === totalQuestions;
+          
+          setQuestionsVoted(updatedQuestionsVoted);
+          setHasVotedAllQuestions(allQuestionsVoted);
           localStorage.setItem(`poll_voted_${pollId}`, JSON.stringify({
-            hasVoted: true,
-            votedOptionIds: updatedVotedOptionIds,
+            hasVotedAllQuestions: allQuestionsVoted,
+            questionsVoted: updatedQuestionsVoted,
             timestamp: new Date().toISOString(),
           }));
-          setHasVoted(true);
           setError('');
         } else {
           setError(errorMsg);
@@ -188,7 +196,6 @@ export default function PollPage() {
       setError(errorMsg);
     } finally {
       setIsLoading(false);
-     
     }
   };
 
@@ -290,8 +297,8 @@ export default function PollPage() {
 
             <PollResults
               poll={poll}
-              hasVoted={hasVoted}
-              votedOptionIds={votedOptionIds}
+              hasVotedAllQuestions={hasVotedAllQuestions}
+              questionsVoted={questionsVoted}
               isLoading={isLoading}
               onVote={handleVote}
             />
