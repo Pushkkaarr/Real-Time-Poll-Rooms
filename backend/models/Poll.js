@@ -10,16 +10,21 @@ const pollSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    question: {
+    title: {
       type: String,
       required: true,
       trim: true,
       minlength: 5,
+      maxlength: 200,
+    },
+    description: {
+      type: String,
+      trim: true,
       maxlength: 500,
     },
-    options: [
+    questions: [
       {
-        optionId: {
+        questionId: {
           type: String,
           default: () => uuidv4(),
           required: true,
@@ -28,26 +33,47 @@ const pollSchema = new mongoose.Schema(
           type: String,
           required: true,
           trim: true,
-          minlength: 1,
-          maxlength: 200,
+          minlength: 5,
+          maxlength: 500,
         },
-        votes: {
+        options: [
+          {
+            optionId: {
+              type: String,
+              default: () => uuidv4(),
+              required: true,
+            },
+            text: {
+              type: String,
+              required: true,
+              trim: true,
+              minlength: 1,
+              maxlength: 200,
+            },
+            votes: {
+              type: Number,
+              default: 0,
+            },
+          },
+        ],
+        totalVotes: {
           type: Number,
           default: 0,
         },
+      },
+    ],
+    voters: [
+      {
+        voterId: String, // fingerprint or session id
+        ipHash: String, // hashed IP address
+        questionsVoted: [String], // Array of questionIds that this voter has voted on
+        timestamp: Date,
       },
     ],
     totalVotes: {
       type: Number,
       default: 0,
     },
-    voters: [
-      {
-        voterId: String, // fingerprint or session id
-        ipHash: String, // hashed IP address
-        timestamp: Date,
-      },
-    ],
     createdAt: {
       type: Date,
       default: Date.now,

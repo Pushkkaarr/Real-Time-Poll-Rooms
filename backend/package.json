@@ -19,7 +19,8 @@
     "dotenv": "^16.3.1",
     "express-rate-limit": "^7.1.5",
     "uuid": "^9.0.1",
-    "joi": "^17.11.0"
+    "joi": "^17.11.0",
+    "axios": "^1.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
