@@ -51,7 +51,7 @@ export default function PollResults({
   const getVotedOptionId = (questionId: string): string | undefined => {
     if (typeof window === 'undefined') return undefined;
     try {
-      const stored = localStorage.getItem(`poll_voted_${poll._id}`);
+      const stored = localStorage.getItem(`poll_voted_${poll.pollId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
         return parsed.votedOptions?.[questionId];
