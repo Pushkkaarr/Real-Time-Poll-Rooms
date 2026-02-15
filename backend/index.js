@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const socketIO = require('socket.io');
+const axios = require('axios');
 const connectDB = require('./config/database');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const pollRoutes = require('./routes/polls');
@@ -39,7 +40,8 @@ app.use(generalLimiter);
 app.get('/', (req, res) => {
   res.json({
     message: 'Real-Time Polling API',
-    version: '1.0.0',
+    version: '2.0.0',
+    features: 'Multiple questions per poll, results shown only after voting all questions',
     endpoints: {
       createPoll: 'POST /api/polls',
       getPoll: 'GET /api/polls/:pollId',
@@ -68,8 +70,18 @@ io.on('connection', (socket) => {
         // Send current poll state to the new user
         socket.emit('poll-state', {
           pollId: poll.pollId,
-          question: poll.question,
-          options: poll.options,
+          title: poll.title,
+          description: poll.description,
+          questions: poll.questions.map(q => ({
+            questionId: q.questionId,
+            text: q.text,
+            options: q.options.map(opt => ({
+              optionId: opt.optionId,
+              text: opt.text,
+              votes: opt.votes,
+            })),
+            totalVotes: q.totalVotes,
+          })),
           totalVotes: poll.totalVotes,
         });
       }
@@ -88,8 +100,18 @@ io.on('connection', (socket) => {
         // Broadcast updated poll state to all users in this poll room
         io.to(`poll-${pollId}`).emit('poll-updated', {
           pollId: poll.pollId,
-          question: poll.question,
-          options: poll.options,
+          title: poll.title,
+          description: poll.description,
+          questions: poll.questions.map(q => ({
+            questionId: q.questionId,
+            text: q.text,
+            options: q.options.map(opt => ({
+              optionId: opt.optionId,
+              text: opt.text,
+              votes: opt.votes,
+            })),
+            totalVotes: q.totalVotes,
+          })),
           totalVotes: poll.totalVotes,
         });
       }
@@ -128,6 +150,22 @@ app.use((req, res) => {
 server.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
   console.log(`WebSocket server running on ws://localhost:${PORT}`);
+
+  // Keep-alive ping to prevent Render app from sleeping
+  const url = process.env.B_LINK; // Your Render app URL
+  const interval = 13 * 60 * 1000; // 13 minutes
+
+  if (url) {
+    setInterval(() => {
+      axios.get(url)
+        .then(response => {
+          console.log(`Keep-alive ping at ${new Date().toISOString()}: Status ${response.status}`);
+        })
+        .catch(error => {
+          console.error(`Keep-alive ping error at ${new Date().toISOString()}:`, error.message);
+        });
+    }, interval);
+  }
 });
 
 // Export io instance for use in other modules
